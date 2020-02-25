@@ -60,6 +60,7 @@ import org.opencv.android.OpenCVLoader;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
+import org.opencv.core.MatOfByte;
 import org.opencv.core.Point;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
@@ -112,6 +113,7 @@ public class OpenNoteCameraView extends JavaCameraView implements PictureCallbac
     private PictureCallback pCallback;
     private boolean scanClicked = false;
     private boolean mVisible;
+    private boolean mUseBase64;
 
     private boolean documentAnimation = false;
     private int numberOfRectangles = 15;
@@ -215,6 +217,10 @@ public class OpenNoteCameraView extends JavaCameraView implements PictureCallbac
 
     public void setRemoveGrayScale(boolean grayscale) {
         mImageProcessor.setRemoveGrayScale(grayscale);
+    }
+
+    public void setUseBase64(boolean useBase64) {
+        this.mUseBase64 = useBase64;
     }
 
     public void initOpenCv(Context context) {
@@ -673,6 +679,16 @@ public class OpenNoteCameraView extends JavaCameraView implements PictureCallbac
         return fileName;
     }
 
+    public String matToBase64(Mat mat) {
+        // create a temporary buffer
+        MatOfByte buffer = new MatOfByte();
+
+        // encode the frame in the buffer, according to the PNG format
+        Imgcodecs.imencode(".png", mat, buffer);
+
+        return Base64.encodeToString(buffer.toArray(), Base64.NO_WRAP);
+    }
+
     public void saveDocument(ScannedDocument scannedDocument) {
 
         Mat doc = (scannedDocument.processed != null) ? scannedDocument.processed : scannedDocument.original;
@@ -689,8 +705,18 @@ public class OpenNoteCameraView extends JavaCameraView implements PictureCallbac
         if (this.listener != null) {
             data.putInt("height", scannedDocument.heightWithRatio);
             data.putInt("width", scannedDocument.widthWithRatio);
-            data.putString("croppedImage", "file://" + fileName);
-            data.putString("initialImage", "file://" + initialFileName);
+
+            if (this.mUseBase64) {
+                String croppedImageBase64 = this.matToBase64(scannedDocument.processed);
+                String initialImageBase64 = this.matToBase64(scannedDocument.original);
+                data.putString("croppedImage", croppedImageBase64);
+                data.putString("initialImage", initialImageBase64);
+                data.putString("croppedImageUri", "file://" + fileName);
+                data.putString("initialImageUri", "file://" + initialFileName);
+            } else {
+                data.putString("croppedImage", "file://" + fileName);
+                data.putString("initialImage", "file://" + initialFileName);
+            }
             data.putMap("rectangleCoordinates", scannedDocument.previewPointsAsHash());
 
             this.listener.onPictureTaken(data);

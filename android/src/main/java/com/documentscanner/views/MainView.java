@@ -92,6 +92,10 @@ public class MainView extends FrameLayout {
         view.setRemoveGrayScale(grayscale);
     }
 
+    public void setUseBase64(boolean useBase64) {
+        view.setUseBase64(useBase64);
+    }
+
     public void capture() {
         view.capture();
     }

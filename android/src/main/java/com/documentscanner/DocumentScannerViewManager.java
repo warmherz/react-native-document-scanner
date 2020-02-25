@@ -95,4 +95,9 @@ public class DocumentScannerViewManager extends ViewGroupManager<MainView> {
         view.setRemoveGrayScale(bw);
     }
 
+    @ReactProp(name = "useBase64", defaultBoolean = false)
+    public void setUseBase64(MainView view, boolean useBase64) {
+        view.setUseBase64(useBase64);
+    }
+
 }
